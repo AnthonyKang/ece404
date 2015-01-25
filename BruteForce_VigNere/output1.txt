@@ -1,0 +1,2 @@
+Babe Ruth famously said "Do not let the fear of striking out hold you back."
+key = hi
