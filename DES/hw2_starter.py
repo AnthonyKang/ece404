@@ -38,7 +38,7 @@ shifts_key_halvs = [1,1,2,2,2,2,2,2,1,2,2,2,2,2,2,1]
 # Now create your s-boxes as an array of arrays by reading the contents
 # of the file s-box-tables.txt:
 with open('s-box-tables.txt') as f:
-    arrays = ...............
+    arrays = .
 s_box = []
 for i in range(0,32, 4):
     s_box.append([arrays[k] for k in range(i, i+4)]) # S_BOX

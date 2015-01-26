@@ -98,15 +98,19 @@ def s_box_sub(fortyeight_bv):
 ########################## encryption and decryption #############################
 
 def des(encrypt_or_decrypt, input_file, output_file, key ): 
-    bv = BitVector( filename = input_file ) 
-    FILEOUT = open( output_file, 'wb' ) 
-    bitvec = bv.read_bits_from_file( 64 )   ## assumes that your file has an integral
+    if (encrypt_or_decrypt == "encrypt" or encrypt_or_decrypt == "decrypt"):
+        bv = BitVector( filename = input_file ) 
+        FILEOUT = open( output_file, 'wb' ) 
+        bitvec = bv.read_bits_from_file( 64 )   ## assumes that your file has an integral
                                             ## multiple of 8 bytes. If not, you must pad it.
-    print bitvec
+    elif (encrypt_or_decrypt == 'encrypt_nf'):
+        bitvec = input_file
+    #print bitvec
     [LE, RE] = bitvec.divide_into_two()
     # get all 16 round keys
     round_key = extract_round_key(key)  
-    if (encrypt_or_decrypt == "encrypt"):    
+
+    if (encrypt_or_decrypt == "encrypt" or encrypt_or_decrypt == "encrypt_nf"):    
         for i in range(16):        
             ## write code to carry out 16 rounds of processing
             #print LE + RE
@@ -130,12 +134,13 @@ def des(encrypt_or_decrypt, input_file, output_file, key ):
             RE = p_box_permuted_RE ^ LE
 
         # print binary and character encryption representation to file
-        encrypt_bin = LE + RE
-        FILEOUT.write('Binary encryption:    ' + str(encrypt_bin) + '\n')
+        if (output_file != 'none'):
+            encrypt_bin = LE + RE
+            FILEOUT.write('Binary encryption:    ' + str(encrypt_bin) + '\n')
 
-        encrypt_int = int('0b' + str(encrypt_bin) , 2)
-        encrypt_char = binascii.unhexlify('%x' % encrypt_int)
-        FILEOUT.write('Character encryption: ' + encrypt_char + '\n')
+            encrypt_int = int('0b' + str(encrypt_bin) , 2)
+            encrypt_char = binascii.unhexlify('%x' % encrypt_int)
+            FILEOUT.write('Character encryption: ' + encrypt_char + '\n')
     
 
     if (encrypt_or_decrypt == "decrypt"):    
@@ -185,37 +190,6 @@ def main():
 
     # implement des
     cipher = des(en_or_de, sys.argv[1], sys.argv[2], key)
-    
-
-    #print cipher
-    #print str(cipher)
-    #n = int('0b' + str(cipher), 2)
-    #print n
-    #a = binascii.unhexlify('%x' % n)
-    #print a
-
-
-
-    #get all 16 round keys
-    #round_key = extract_round_key(key)
-
-    #bv = BitVector(intVal = 1225974856, size = 32)
-    
-    # permute the 32 bit half, expansion permutation
-    #bv = bv.permute(expansion_permutation)
-    
-    #xor expansion permutation with round key
-    #xored_bv = bv ^ round_key[0]
-    #print xored_bv
-    #print s_box
-    
-    # sbox substitution to go from 48 bits to 32 bits
-    #sboxsub_bv = s_box_sub(xored_bv)
-
-    # pbox final permutation
-    #pboxsub_bv = sboxsub_bv.permute(p_box_permutation)
-    #print pboxsub_bv 
-    
  
 if __name__ == "__main__":
     main()
