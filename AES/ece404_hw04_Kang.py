@@ -52,14 +52,25 @@ def subBytes(LookupTable, stateArray):
 	subbedArray = [LookupTable[stateArray[x][0:4].int_val()*10 + stateArray[x][4:8].int_val()] for x in range(16)]
 	return subbedArray
 
+def shiftRows(stateArray):
+	
+	rows = [stateArray[x::4] for x in range(0,4)]
+	for i in range(1,4):
+		rows[i] = rows[i][i:] + rows[i][:i]
+	array = []
+	for i in range(4):
+		for j in range(4):
+			array.append(rows[j][i])
+	
+	return array
 
 def main():
 	bv = BitVector(intVal = 0)
 	stateArray = [bv.gen_rand_bits_for_prime(8) for i in range(16)]
 	SBox = createLookupTable('decrypt')
 	subbedArray = subBytes(SBox,stateArray)
-	for i in range(16):
-		print stateArray[i]
-		print subbedArray[i]
+	shiftArray = shiftRows(stateArray)
+	
+		
 if __name__ == "__main__":
 	main()
