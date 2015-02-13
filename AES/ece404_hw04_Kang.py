@@ -3,38 +3,63 @@
 import sys
 from BitVector import *
 
-def createLookupTable():
+def createLookupTable(EncryptorDecrypt):
+	
 	# Initialize 16x16 Hex Table
-	LookupTable = [BitVector(intVal = x, size = 8) for x in range(0,256)]
+	LookupTable = [BitVector(intVal = x, size = 8) for x in range(256)]
 	
 	# Initialize Modulus Polynomial in GF(2^8)
 	modulus = BitVector(bitstring='100011011')
 	n = 8
+	
+	# Encrpyt or Decrypt
+	if(EncryptorDecrypt == 'encrypt'):
+	
+		# Take the multiplicative inverse of each element in the table
+		LookupTable = [LookupTable[x].gf_MI(modulus, n) for x in range(256)]
+		LookupTable[0] = BitVector(intVal = 0, size = 8)
 
-	# Take the multiplicative inverse of each element in the table
-	LookupTable = [LookupTable[x].gf_MI(modulus, n) for x in range(0,256)]
-	LookupTable[0] = BitVector(intVal = 0, size = 8)
+		# Do bit scrambling with special byte c
+		c = BitVector(bitstring='01100011')
 
-	# Do bit scrambling with special byte c
-	c = BitVector(bitstring='01100011')
+		# Initialize an empty 16x16 Hex Table so changed bits don't affect the calculations
+		SBox = [BitVector(intVal = x, size = 8) for x in range(256)]
 
-	# Initialize an emptey 16x16 Hex Table so changed bits don't affect the calculations
-	SBox = [BitVector(intVal = x, size = 8) for x in range(0,256)]
+		for byte in range(0,256):
+			for i in range(0,8):
+				SBox[byte][i] = LookupTable[byte][i] ^ LookupTable[byte][(i + 4) % 8] ^ LookupTable[byte][(i + 5) % 8] ^ LookupTable[byte][(i + 6) % 8] ^ LookupTable[byte][(i + 7) % 8] ^ c[i]
+	
+	if(EncryptorDecrypt == 'decrypt'):
+	
+		# Do bit scrambling with special byte d
+		d = BitVector(bitstring='00000101')
 
-	for byte in range(0,256):
-		for i in range(0,8):
-			SBox[byte][i] = LookupTable[byte][i] ^ LookupTable[byte][(i + 4) % 8] ^ LookupTable[byte][(i + 5) % 8] ^ LookupTable[byte][(i + 6) % 8] ^ LookupTable[byte][(i + 7) % 8] ^ c[i]
+		# Initialize an empty 16x16 Hex Table so changed bits don't affect the calculations
+		SBox = [BitVector(intVal = x, size = 8) for x in range(256)]
 
-	for i in range(0,256):
-		print SBox[i]
+		for byte in range(0,256):
+			for i in range(0,8):
+				SBox[byte][i] = LookupTable[byte][i] ^ LookupTable[byte][(i + 2) % 8] ^ LookupTable[byte][(i + 5) % 8] ^ LookupTable[byte][(i + 7) % 8] ^ d[i]
+		
+		# Take the multiplicative inverse of each element in the table
+		SBox = [SBox[x].gf_MI(modulus, n) for x in range(256)]
+
+	return SBox
+
+def subBytes(LookupTable, stateArray):
+	
+	# Substitute bytes	
+	subbedArray = [LookupTable[stateArray[x][0:4].int_val()*10 + stateArray[x][4:8].int_val()] for x in range(16)]
+	return subbedArray
+
 
 def main():
-	#bv = BitVector(intVal = 1, size = 8)
-	#bv1 = BitVector(intVal = 2, size = 8)
-	#print bv
-	#print bv1
-	#print bv[7] ^ bv1[7]
-	createLookupTable()
-
+	bv = BitVector(intVal = 0)
+	stateArray = [bv.gen_rand_bits_for_prime(8) for i in range(16)]
+	SBox = createLookupTable('decrypt')
+	subbedArray = subBytes(SBox,stateArray)
+	for i in range(16):
+		print stateArray[i]
+		print subbedArray[i]
 if __name__ == "__main__":
 	main()
