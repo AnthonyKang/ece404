@@ -98,81 +98,99 @@ def s_box_sub(fortyeight_bv):
 ########################## encryption and decryption #############################
 
 def des(encrypt_or_decrypt, input_file, output_file, key ): 
+    
+    cipher = ''
+    # select encrypt or decrypt
     if (encrypt_or_decrypt == "encrypt" or encrypt_or_decrypt == "decrypt"):
+        # find number of bytes in file
+        input_text = open(input_file,'r+').read()
+        num_bytes = len(input_text)
+
+        # initialize array of bitvectors for each plaintext block
+        bitvec = num_bytes/8 * [0]
+        
         bv = BitVector( filename = input_file ) 
         FILEOUT = open( output_file, 'wb' ) 
-        bitvec = bv.read_bits_from_file( 64 )   ## assumes that your file has an integral
+        for i in range(0,len(bitvec)):
+            bitvec[i] = BitVector(size = 64)
+            bitvec[i] = bv.read_bits_from_file( 64 )   ## assumes that your file has an integral
                                             ## multiple of 8 bytes. If not, you must pad it.
+           
     elif (encrypt_or_decrypt == 'encrypt_nf'):
-        bitvec = input_file
-    #print bitvec
-    [LE, RE] = bitvec.divide_into_two()
+        bitvec = [0]
+        bitvec[0] = input_file
+    
     # get all 16 round keys
     round_key = extract_round_key(key)  
+    
+    if (encrypt_or_decrypt == "encrypt" or encrypt_or_decrypt == "encrypt_nf"):
+        for z in range(0,len(bitvec)):    
+            [LE, RE] = bitvec[z].divide_into_two()
+            for i in range(16):        
+                ## write code to carry out 16 rounds of processing
+                #print LE + RE
+              
+                # permute the 32 bit half, expanstion permutation
+                RE_expanded = RE.permute(expansion_permutation)
 
-    if (encrypt_or_decrypt == "encrypt" or encrypt_or_decrypt == "encrypt_nf"):    
-        for i in range(16):        
-            ## write code to carry out 16 rounds of processing
-            #print LE + RE
-          
-            # permute the 32 bit half, expanstion permutation
-            RE_expanded = RE.permute(expansion_permutation)
+                # xor the right half with the corresponding round key
+                xored_RE = RE_expanded ^ round_key[i]
 
-            # xor the right half with the corresponding round key
-            xored_RE = RE_expanded ^ round_key[i]
+                # s-box subsubstitution with right half
+                s_box_subbed_RE = s_box_sub(xored_RE)
 
-            # s-box subsubstitution with right half
-            s_box_subbed_RE = s_box_sub(xored_RE)
+                # p-box permutation with right half
+                p_box_permuted_RE = s_box_subbed_RE.permute(p_box_permutation)
 
-            # p-box permutation with right half
-            p_box_permuted_RE = s_box_subbed_RE.permute(p_box_permutation)
-
-            # next left half is current right half
-            LE = RE
-            
-            # next right half is fiestaled prev right half xor current left half
-            RE = p_box_permuted_RE ^ LE
-
-        # print binary and character encryption representation to file
+                # next left half is current right half
+                LE = RE
+                
+                # next right half is fiestaled prev right half xor current left half
+                RE = p_box_permuted_RE ^ LE
+            cipher =  cipher + str(LE) + str(RE)
+            # print binary and character encryption representation to file
         if (output_file != 'none'):
-            encrypt_bin = LE + RE
-            FILEOUT.write('Binary encryption:    ' + str(encrypt_bin) + '\n')
+            #encrypt_bin = LE + RE
+            FILEOUT.write('Binary encryption:    ' + cipher + '\n')
 
-            encrypt_int = int('0b' + str(encrypt_bin) , 2)
+            encrypt_int = int('0b' + cipher , 2)
             encrypt_char = binascii.unhexlify('%x' % encrypt_int)
             FILEOUT.write('Character encryption: ' + encrypt_char + '\n')
-    
+        return LE + RE
+        
 
-    if (encrypt_or_decrypt == "decrypt"):    
-        for i in range(15,-1,-1):        
-            
-            #permute the 32 bit half, expanstion permutation
-            RE_expanded = RE.permute(expansion_permutation)
+    if (encrypt_or_decrypt == "decrypt"):  
+        plaintext = ''
+        for z in range(0,len(bitvec)):   
+            [LE, RE] = bitvec[z].divide_into_two()
+            for i in range(15,-1,-1):        
+                
+                #permute the 32 bit half, expanstion permutation
+                RE_expanded = RE.permute(expansion_permutation)
 
-            # xor the right half with the corresponding round key
-            xored_RE = RE_expanded ^ round_key[i]
+                # xor the right half with the corresponding round key
+                xored_RE = RE_expanded ^ round_key[i]
 
-            # s-box subsubstitution with right half
-            s_box_subbed_RE = s_box_sub(xored_RE)
+                # s-box subsubstitution with right half
+                s_box_subbed_RE = s_box_sub(xored_RE)
 
-            # p-box permutation with right half
-            p_box_permuted_RE = s_box_subbed_RE.permute(p_box_permutation)
+                # p-box permutation with right half
+                p_box_permuted_RE = s_box_subbed_RE.permute(p_box_permutation)
 
-            # next left half is current right half
-            LE = RE
-            
-            # next right half is fiestaled prev right half xor current left half
-            RE = p_box_permuted_RE ^ LE
+                # next left half is current right half
+                LE = RE
+                
+                # next right half is fiestaled prev right half xor current left half
+                RE = p_box_permuted_RE ^ LE
+            plaintext = plaintext + str(LE) + str(RE)
+            # print binary and character encryption representation to file
+        if (output_file != 'none'):
+            FILEOUT.write('Binary decryption:    ' + plaintext + '\n')
 
-        # print binary and character encryption representation to file
-        encrypt_bin = LE + RE
-        FILEOUT.write('Binary decryption:    ' + str(encrypt_bin) + '\n')
-
-        encrypt_int = int('0b' + str(encrypt_bin) , 2)
-        encrypt_char = binascii.unhexlify('%x' % encrypt_int)
-        FILEOUT.write('Character decryption: ' + encrypt_char + '\n')
-
-    return LE + RE
+            encrypt_int = int('0b' + plaintext , 2)
+            encrypt_char = binascii.unhexlify('%x' % encrypt_int)
+            FILEOUT.write('Character decryption: ' + encrypt_char + '\n')
+        return LE + RE    
 
 def main():
 

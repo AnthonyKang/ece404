@@ -1,4 +1,3 @@
-for i in range (15,-1,-1):
-	print i 
-for i in range(16):
-	print i 
+string = "['a',123,123,123]"
+print eval(string)
+print type(eval(string)[0])

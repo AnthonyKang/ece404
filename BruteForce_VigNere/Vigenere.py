@@ -1,3 +1,4 @@
+ls
 # Homework 1
 # Anthony Kang
 # kang144
