@@ -59,6 +59,8 @@ class RC4:
 			outfile.write(bytearray(encrypt))
 		#print self.S
 
+		return encrypt
+
 	def decrypt(self, image):
 		picture = []
 		with open(image,'r') as myfile:
@@ -91,6 +93,8 @@ class RC4:
 			for x in lines[0:5]:
 				outfile.write(x)
 			outfile.write(bytearray(decrypt))
+
+		return decrypt
 		
 		
 
@@ -99,8 +103,19 @@ class RC4:
 
 def main():
 	rc4Cipher = RC4('wassupmyniggamynameisgpasdfwefinsdfoijsdfol')
-	rc4Cipher.encrypt('Tiger2.ppm')
-	rc4Cipher.decrypt('encrypted_tiger.ppm')
+	encrypt = rc4Cipher.encrypt('Tiger2.ppm')
+	decrypt = rc4Cipher.decrypt('encrypted_tiger.ppm')
+	picture = []
+	with open('Tiger2.ppm','r') as myfile:
+		lines = myfile.readlines()
+		for i in range(5,len(lines)):
+			for j in range(len(lines[i])):
+				picture.append(ord(lines[i][j]))
+
+	if(picture == decrypt):
+		print ('RC4 is awesome')
+	else:
+		print ('something wrong')
 
 if __name__ == "__main__":
     main()
