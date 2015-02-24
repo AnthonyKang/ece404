@@ -15,7 +15,7 @@ def createLookupTable(EncryptorDecrypt):
     # Encrpyt or Decrypt
     if(EncryptorDecrypt == 'encrypt'):
     
-        # Take the multiplicative inverse of each element in the table
+        #  Take the multiplicative inverse of each element in the table
         LookupTable = [LookupTable[x].gf_MI(modulus, n) for x in range(256)]
         LookupTable[0] = BitVector(intVal = 0, size = 8)
 
