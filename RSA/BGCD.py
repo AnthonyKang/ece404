@@ -21,4 +21,4 @@ arg1 = 321451443876
 arg2 = 12555473728888
 
 gcdval = bgcd( arg1, arg2 )
-print "BGCD is: ", gcdval
+#print "BGCD is: ", gcdval

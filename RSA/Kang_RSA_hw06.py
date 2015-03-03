@@ -3,10 +3,7 @@ from PrimeGenerator import *
 from BGCD import bgcd
 import sys
 
-def generateKey():
-
-	# Given e = 65537
-	e = 65537
+def generateKey(e):
 
 	# Given modulus n to be 256 bits, generate p and q 
 	# p and q are 128 bits
@@ -47,7 +44,7 @@ def generateKey():
 	public = [e,n]
 	private = [d,n]
 
-	return (public, private,p,q)
+	return (public, private,p,q,d)
 
 def readMessage(myfilename, encrypt_decrypt):
 
@@ -74,7 +71,7 @@ def readMessage(myfilename, encrypt_decrypt):
 
 	return message_blocks
 
-def encrypt(filename, public):
+def encrypt(filename, public, fileout):
 
 	# read the message
 	message_blocks = readMessage(filename, 'encrypt')
@@ -85,10 +82,11 @@ def encrypt(filename, public):
 	for i in range(len(message)):
 		encrypt_message.append(pow(message[i], public[0], public[1]))
 	
-	printToFile(encrypt_message, sys.argv[3], 'encrypt')
+	printToFile(encrypt_message, fileout, 'encrypt')
 	
+	return encrypt_message
 
-def decrypt(filename, private, p, q):
+def decrypt(filename, private, p, q,fileout):
 
 	encrypted_blocks = readMessage(filename, 'decrypt')
 	 
@@ -111,7 +109,7 @@ def decrypt(filename, private, p, q):
 	for i in range(len(encrypted_blocks)):
 		decrypt_message.append((( V_p[i]*X_p) + (V_q[i]*X_q) ) % private[1])
 
-	printToFile(decrypt_message, sys.argv[3], 'decrypt')
+	printToFile(decrypt_message, fileout, 'decrypt')
 	
 
 def printToFile(message_block, filename, encrypt_decrypt):
@@ -123,6 +121,14 @@ def printToFile(message_block, filename, encrypt_decrypt):
 		else:
 			bv = BitVector(intVal = message, size = 256)
 		FILEOUT.write(bv.get_text_from_bitvector())
+		#FILEOUT.write(bv.get_hex_string_from_bitvector())
+	for message in message_block:
+		if(encrypt_decrypt == 'decrypt'):
+			bv = BitVector(intVal = message, size = 128)
+		else:
+			bv = BitVector(intVal = message, size = 256)
+		
+		FILEOUT.write(bv.get_hex_string_from_bitvector())
 
 
 
@@ -132,11 +138,11 @@ def main():
 		sys.exit()
 	
 	# Generate the keys
-	keys = generateKey()
-	public, private,p,q = keys
+	keys = generateKey(65537)
+	public, private,p,q,d = keys
 
 	if(sys.argv[1] == '-e'):
-		encrypt(sys.argv[2], public)
+		encrypt(sys.argv[2], public, sys.argv[3])
 
 		# Store the generated public and private keys so it can be used for decryption
 		open('public.txt', 'w').write(str(public))
@@ -151,11 +157,16 @@ def main():
 		private = map(int,open('private.txt', 'r').readlines()[0].split())
 		p = int(open('p.txt','r').read())
 		q = int(open('q.txt','r').read())
-		decrypt(sys.argv[2], private, p, q)
+		decrypt(sys.argv[2], private, p, q, sys.argv[3])
 
 	else:
 		print 'usage: Kang_RSA_hw06.py [-e | -d] input.txt output.txt'
 		sys.exit()
+
+	with open('numbers.txt','wa') as myfile:
+		myfile.write('p= '+str(p) + '\n')
+		myfile.write('q= '+str(q) + '\n')
+		myfile.write('d= '+str(d) + '\n')
 	
 	
 if __name__ == "__main__":
